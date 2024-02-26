@@ -1,33 +1,38 @@
 import os
 import argparse
-import json
+import shutil
 import subprocess
+import json
 
 def create_project(project_name, bits):
+    current_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(os.getcwd(), project_name)
     vscode_dir = os.path.join(project_dir, '.vscode')
-    main_cpp = os.path.join(project_dir, 'main.cpp')
+    templates_dir = current_dir 
 
     os.makedirs(vscode_dir, exist_ok=True)
 
-    with open(main_cpp, 'w') as file:
-        file.write('#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}')
+    # Create main.cpp
+    main_cpp_path = os.path.join(project_dir, 'main.cpp')
+    with open(main_cpp_path, 'w') as main_cpp_file:
+        main_cpp_file.write('#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}')
 
-    tasks_path = os.path.join(vscode_dir, 'tasks.json')
-    launch_path = os.path.join(vscode_dir, 'launch.json')
+    # Copy tasks.json and launch.json templates
+    tasks_template_path = os.path.join(templates_dir, 'tasks.json')
+    launch_template_path = os.path.join(templates_dir, 'launch.json')
 
-    tasks_content = {
-    }
+    shutil.copy(tasks_template_path, vscode_dir)
+    shutil.copy(launch_template_path, vscode_dir)
 
-    launch_content = {
-    }
+    # Modify tasks.json if necessary based on the bits argument
+    tasks_json_path = os.path.join(vscode_dir, 'tasks.json')
+    with open(tasks_json_path, 'r+') as tasks_file:
+        tasks_content = json.load(tasks_file)
+        tasks_file.seek(0)
+        json.dump(tasks_content, tasks_file, indent=4)
+        tasks_file.truncate()
 
-    with open(tasks_path, 'w') as file:
-        json.dump(tasks_content, file, indent=4)
-
-    with open(launch_path, 'w') as file:
-        json.dump(launch_content, file, indent=4)
-
+    # Launch VS Code with the new project directory
     subprocess.run(['code', project_dir])
 
 if __name__ == "__main__":
